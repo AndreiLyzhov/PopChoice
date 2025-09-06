@@ -1,0 +1,104 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000C36;
+    color: white; 
+}
+
+header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+    margin-bottom: 36px;
+   
+}
+
+header > img {
+    height: 174px;
+    margin-bottom: 10px;
+    
+}
+
+header > p {
+    font-family: "Carter One", sans-serif;
+    font-weight: 400;
+    font-size: 45px;
+   
+}
+
+form {
+   
+    width: 328px;
+    margin: 0 auto;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: "Roboto Slab", sans-serif;
+}
+
+form > label {
+    align-self: flex-start;
+    font-size: 16px;
+    font-weight: 300;
+    margin-bottom: 10px;
+    
+}
+
+.input {
+    resize: none;
+    font-family: "Roboto Slab", sans-serif;
+    font-size: 14px;
+    font-weight: 100;
+    color: white;
+    height: 78px;
+    width: 325px;
+    border: 0px;
+    border-radius: 10px;
+    background-color: #3B4877;
+    margin-bottom: 36px;
+    padding: 10px;
+}
+
+button {
+    background-color: #51E08A;
+    color: #000C36;
+    border: 0px;
+    height: 71px;
+    width: 325px;
+    border-radius: 10px;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 68px;
+}
+
+.recommendation-container {
+    padding-left: 50px;
+    padding-right: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: "Roboto Slab", sans-serif;
+}
+
+.recommendation-title {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 21px;
+}
+
+.recommendation-description {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 65px;
+}
+
+
+
+
+
