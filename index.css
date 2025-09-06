@@ -65,6 +65,36 @@ form > label {
     padding: 10px;
 }
 
+.starting {
+    text-align: center;
+    height: auto;
+    padding: 20px;
+}
+
+.starting::placeholder {
+    color: #000C36;
+}
+
+.time-input {
+    all: unset;
+    color: white;
+    border: solid #000C36 2px;
+    border-radius: 10px;
+    width: 30px;
+    margin: 0 10px;
+    padding: 2px;
+}
+
+.time-input::-webkit-outer-spin-button,
+.time-input::-webkit-inner-spin-button,
+.starting::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0; 
+}
+
+
+
+
 button {
     background-color: #51E08A;
     color: #000C36;
