@@ -1,6 +1,7 @@
 import { openai, supabase } from './config.js';
 import { useState } from "react";
 import { useEffect } from "react";
+import { useRef } from "react";
 
 import StartingForm from "./StartingForm.jsx"
 import MainForm from './MainForm.jsx';
@@ -12,26 +13,28 @@ export default function Main(){
         
 
         const [recommendation, setRecommendation] = useState("")
-        const [formData, setFormData] = useState("")
+        const [formData, setFormData] = useState([])
         const [startData, setStartData] = useState(null)
-        const [currentUser, setCurrentUser] = useState(null)
 
-        const isMainFormRendered = !formData && !recommendation && startData && currentUser
-        const isRecommendationRendered = !formData && recommendation
+
+        const isFormDataFull = formData.length === startData?.peopleNumber
+        const isMainFormRendered = !isFormDataFull && !recommendation && startData
+        const isRecommendationRendered = !isFormDataFull && recommendation
         const isStartingFormRendered = !startData
 
         useEffect(() => {
-            if (formData){
+            if (formData.length === startData?.peopleNumber){
                 main(formData)
+                
             }
         }, [formData])
 
-        useEffect(() => {
-            if (startData) {
-                setCurrentUser(startData.peopleNumber)
-            }
+        // useEffect(() => {
+        //     if (startData) {
+        //         setCurrentUser(new Array(startData.peopleNumber))
+        //     }
 
-        }, [startData])
+        // }, [startData])
 
         function resetApp() {
             setRecommendation("")
@@ -41,32 +44,59 @@ export default function Main(){
         }
             
         
-        function clickHandler(formData) {
-            setFormData(formData)
-        }
 
         async function main(formData){
             try {
-                const userInput = Array.from(formData).filter(entry => entry[1]).map(item => item.join(': '))
+                
+                inputFormat(formData)
 
-                const formattedInput = (await Promise.all(userInput.map(async(pair) => {
-                    return await getQueryForEmbedding(pair)
-                }))).join('')
+                // const formattedInput = (await Promise.all(userInputs.map(async(pair) => {
+                //     return await getQueryForEmbedding(pair)
+                // }))).join('')
 
-                const embedding = await createEmbedding(userInput)
+                // const embedding = await createEmbedding(userInputs)
 
-                const match = await findNearestMatch(embedding) 
-                const matchedObj = content[match[0].id - 1]
+                // const match = await findNearestMatch(embedding) 
+                // const matchedObj = content[match[0].id - 1]
 
-                const response = await getExplanation(match[0].content, formattedInput)
-                setRecommendation({...matchedObj, response})       
-                setFormData("")
+                // const response = await getExplanation(match[0].content, formattedInput)
+                // setRecommendation({...matchedObj, response})       
+                // setFormData("")
             } catch(e) {
                 console.log("Error in async part of the main function: ", e)
             }
             
         }
+
+        function inputFormat(formData) {
+            let favouriteMovies = ""
+            let newOrClassic = ""
+            let funOrSerious = ""
+
+            formData.map((userInput, index) => {
+
+                const inputArray = Array.from(userInput).filter(entry => entry[1])
+
+                console.log(inputArray)
+                // favouriteMovies += userInput.get("what's-your-favourite-movie-and-why?") ? userInput.get("what's-your-favourite-movie-and-why?") + ". " : ""
+                // newOrClassic += userInput.get("are-you-in-the-mood-for-something-new-or-classic?") ? userInput.get("are-you-in-the-mood-for-something-new-or-classic?") + ". " : ""
+                // funOrSerious += userInput.get("do-you-wanna-have-fun-or-do-you-want-something-serious?") ? userInput.get("do-you-wanna-have-fun-or-do-you-want-something-serious?") + ". " : ""
+
+                // if (index + 1 === formData.length) {
+                //     userInput.get()
+                // }
+ 
+            })
+
+            // Array.from(userInput).filter(entry => entry[1]).map(item => item.join(': ')).join(". ")
+
+
+
+            console.log(favouriteMovies, newOrClassic, funOrSerious)
+        }
         
+
+
         async function createEmbedding(input) {
             try {
                 const { data } = await openai.embeddings.create({
@@ -170,8 +200,9 @@ export default function Main(){
                 {
                     isMainFormRendered &&
                     <MainForm 
-                        clickHandler={clickHandler}
-                        currentUser={currentUser}
+                        setFormData={setFormData}
+                        formData={formData}
+
                     />
                 }
                 {
