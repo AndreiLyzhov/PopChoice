@@ -7,6 +7,7 @@ import StartingForm from "./StartingForm.jsx"
 import MainForm from './MainForm.jsx';
 import Recommendation from "./Recommendation.jsx";
 import { content } from "./content.js"
+import { index } from 'langchain/indexes';
 
 export default function Main(){
     
@@ -47,21 +48,23 @@ export default function Main(){
 
         async function main(formData){
             try {
-                
-                inputFormat(formData)
 
                 // const formattedInput = (await Promise.all(userInputs.map(async(pair) => {
                 //     return await getQueryForEmbedding(pair)
                 // }))).join('')
 
-                // const embedding = await createEmbedding(userInputs)
+                const formattedInput = inputFormat(formData)
 
-                // const match = await findNearestMatch(embedding) 
-                // const matchedObj = content[match[0].id - 1]
+                const embedding = await createEmbedding(formattedInput)
 
-                // const response = await getExplanation(match[0].content, formattedInput)
-                // setRecommendation({...matchedObj, response})       
-                // setFormData("")
+                const match = await findNearestMatch(embedding) 
+                const matchedObj = content[match[0].id - 1]
+
+                
+
+                const response = await getExplanation(match[0].content, formattedInput)
+                setRecommendation({...matchedObj, response})       
+                setFormData("")
             } catch(e) {
                 console.log("Error in async part of the main function: ", e)
             }
@@ -69,30 +72,36 @@ export default function Main(){
         }
 
         function inputFormat(formData) {
-            let favouriteMovies = ""
-            let newOrClassic = ""
-            let funOrSerious = ""
+            let answers = {}
+            let questions = formData.map(userInput => Array.from(userInput))[0].map(entry => entry[0])
 
-            formData.map((userInput, index) => {
+            const usersObjects = formData.map(userInput => {
 
-                const inputArray = Array.from(userInput).filter(entry => entry[1])
+                return Object.fromEntries(Array.from(userInput).filter(entry => entry[1]))
 
-                console.log(inputArray)
-                // favouriteMovies += userInput.get("what's-your-favourite-movie-and-why?") ? userInput.get("what's-your-favourite-movie-and-why?") + ". " : ""
-                // newOrClassic += userInput.get("are-you-in-the-mood-for-something-new-or-classic?") ? userInput.get("are-you-in-the-mood-for-something-new-or-classic?") + ". " : ""
-                // funOrSerious += userInput.get("do-you-wanna-have-fun-or-do-you-want-something-serious?") ? userInput.get("do-you-wanna-have-fun-or-do-you-want-something-serious?") + ". " : ""
-
-                // if (index + 1 === formData.length) {
-                //     userInput.get()
-                // }
- 
             })
+
+            
+
+            // for (let i = 0; i < 4; i++) {
+            //     answers[i] = usersObjects.map(user => {
+            //         return user[questions[i]]
+            //     }).join(". ")
+                
+            // }
+
+            questions.map(question => {
+                
+                answers[question] = usersObjects.map((user) => user[question] ? user[question] : "")
+                    .filter(answer => answer).join(". ")
+            })
+
+            return Object.entries(answers).map(answer => answer.join(": ")).join(". \n\n")
+            
+            
 
             // Array.from(userInput).filter(entry => entry[1]).map(item => item.join(': ')).join(". ")
 
-
-
-            console.log(favouriteMovies, newOrClassic, funOrSerious)
         }
         
 
@@ -136,7 +145,7 @@ export default function Main(){
                         role: "system",
                         content: `You are enthusiastic movie expert who loves recommending movies to people. 
                         You will be given two pieces of information - some context about the chosen movie and the user 
-                        input which includes questions for the user and his answers. Your main job is to formulate a short(60-70 words) 
+                        input which includes questions for the user and his answers. Your main job is to formulate a short(30-40 words) 
                         explaination why user should like this movie based on the contex and the user input.`
                     },
                     {
