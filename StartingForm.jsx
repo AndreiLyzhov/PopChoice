@@ -13,7 +13,12 @@ export default function StartingForm(props) {
     }
 
     return (
-        <>
+        <>  
+            <header>
+                <img src="./PopChoiceIcon.png"/>
+                <p>Pop Choice</p>
+            </header>
+
             <form action={startApp}>
                 
                 <input 

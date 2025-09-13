@@ -164,6 +164,7 @@ button {
 .recommendation-container {
     padding-left: 50px;
     padding-right: 50px;
+    padding-top: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -180,6 +181,14 @@ button {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 65px;
+    width: 50%;
+}
+
+.poster {
+    width: 50%;
+    height: 50%;
+    object-fit: fill;
+    margin-bottom: 15px;
 }
 
 

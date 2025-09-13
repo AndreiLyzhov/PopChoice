@@ -11,14 +11,8 @@ export default function App() {
     
     
     return (
-        <>
-            <header>
-                <img src="./PopChoiceIcon.png"/>
-                <p>Pop Choice</p>
-            </header>
+
             <Main />
-            
-            
-        </>
+
     )
 }
