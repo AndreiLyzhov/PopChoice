@@ -8,14 +8,14 @@ import MainForm from './MainForm.jsx';
 import Recommendation from "./Recommendation.jsx";
 import { content } from "./content.js"
 import { index } from 'langchain/indexes';
-// import theMovieDb from './themoviedb-javascript-library/themoviedb.js';
+
 
 export default function Main(){
     
         
 
-        const [recommendation, setRecommendation] = useState("")
-        const [formData, setFormData] = useState([])
+        const [recommendation, setRecommendations] = useState("")
+        const [formData, setFormData] = useState("")
         const [startData, setStartData] = useState(null)
 
 
@@ -39,7 +39,7 @@ export default function Main(){
         // }, [startData])
 
         function resetApp() {
-            setRecommendation("")
+            setRecommendations([])
             setFormData("")
             setStartData(null)
             setCurrentUser(null)
@@ -55,18 +55,25 @@ export default function Main(){
                 const embedding = await createEmbedding(formattedInput)
 
                 const match = await findNearestMatch(embedding) 
-                const matchedObj = content[match[0].id - 1]
+                const matchedObjects = match.map(item => content[item.id - 1])
 
-                const response = await getExplanation(match[0].content, formattedInput)
+                console.log(matchedObjects)
 
+                const responses = await Promise.all(
+                  match.map(
+                    async (item) =>
+                      await getExplanation(item.content, formattedInput)
+                  )
+                );
 
-                const movieTitle = content[match[0].id - 1].title
-                
-                
-                const posterUrl = await getPoster(movieTitle)
-                console.log(posterUrl)
+                const posterUrls = await Promise.all(
+                  match.map(async (item) => {
+                    const movieTitle = content[item.id - 1].title;
+                    return await getPoster(movieTitle);
+                  })
+                );
 
-                setRecommendation({...matchedObj, response, posterUrl})       
+                setRecommendations({matchedObjects, responses, posterUrls})       
                 setFormData("")
             } catch(e) {
                 console.log("Error in async part of the main function: ", e)
