@@ -11,6 +11,11 @@ export default function MainForm(props) {
     }
     
     return (
+        <>
+            <header>
+                <img src="./PopChoiceIcon.png"/>
+                <p>Pop Choice</p>
+            </header>
         
             <form action={clickHandler}>
                 <p className="current-user">{props.formData.length + 1}</p>
@@ -49,5 +54,6 @@ export default function MainForm(props) {
                 
                 <button>Let's Go</button>
             </form>
+        </>
     )
 }
