@@ -13,7 +13,7 @@ export default function MainForm(props) {
     return (
         <>
             <header>
-                <img src="./PopChoiceIcon.png"/>
+                <img src="/PopChoiceIcon.png"/>
                 <p>Pop Choice</p>
             </header>
         
