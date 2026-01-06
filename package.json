@@ -1,6 +1,6 @@
 {
-  "name": "Scrim-s05qo7r",
-  "description": "https://scrimba.com/fullstack-path-c0fullstack/~0453/s0uqtb4t2v/head",
+  "name": "PopChoice",
+  "description": "AI-App advising movies",
   "scripts": {
     "start": "vite",
     "dev": "vite",

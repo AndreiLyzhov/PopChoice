@@ -1,4 +1,5 @@
 import { openai, supabase } from './config.js';
+import { theMovieDb } from "./themoviedb.js"
 import { useState } from "react";
 import { useEffect } from "react";
 import { useRef } from "react";
@@ -8,6 +9,7 @@ import MainForm from './MainForm.jsx';
 import Recommendation from "./Recommendation.jsx";
 import { content } from "./content.js"
 import { index } from 'langchain/indexes';
+
 
 
 export default function Main(){
@@ -52,12 +54,21 @@ export default function Main(){
 
                 const formattedInput = inputFormat(formData)
 
+                console.log("Done 1")
+
                 const embedding = await createEmbedding(formattedInput)
 
+                console.log("Done 2")
+
                 const match = await findNearestMatch(embedding) 
+
+                console.log("Done 3")
+
                 const matchedObjects = match.map(item => content[item.id - 1])
 
                 console.log(matchedObjects)
+
+                console.log("Done 4")
 
                 const responses = await Promise.all(
                   match.map(
@@ -66,12 +77,16 @@ export default function Main(){
                   )
                 );
 
+                console.log("Done 5")
+
                 const posterUrls = await Promise.all(
                   match.map(async (item) => {
                     const movieTitle = content[item.id - 1].title;
                     return await getPoster(movieTitle);
                   })
                 );
+
+                console.log("Done 6")
 
                 setRecommendations({matchedObjects, responses, posterUrls})       
                 setFormData("")
@@ -217,7 +232,7 @@ export default function Main(){
             response = await getPosterById(filmId)
             data = JSON.parse(response)
             
-            
+            console.log(data, " - after getting Poster")
             const posterUrl = data.posters[0].file_path
             
             return theMovieDb.common.images_uri + "original" + posterUrl 

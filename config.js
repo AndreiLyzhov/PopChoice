@@ -15,3 +15,5 @@ const url = "https://widegmaevygsmytsotgd.supabase.co"
 // if (!url) throw new Error(`Expected env var SUPABASE_URL`);
 export const supabase = createClient(url, privateKey);
 
+
+
