@@ -4,7 +4,7 @@ export default function Recommendation(props) {
 
     const [option, setOption] = useState(0)
 
-    console.log(props?.recommendation)
+    // console.log(props?.recommendation)
 
 
     const title = props?.recommendation?.matchedObjects?.[option].title
@@ -14,7 +14,7 @@ export default function Recommendation(props) {
     const optionsLength = props?.recommendation?.matchedObjects?.length
     const isNotFinalOption = (option < optionsLength - 1)
 
-    console.log(optionsLength)
+    // console.log(optionsLength)
 
     function clickHandler() {
         if (isNotFinalOption) {

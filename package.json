@@ -1,6 +1,7 @@
 {
   "name": "PopChoice",
   "description": "AI-App advising movies",
+  "type": "module",
   "scripts": {
     "start": "vite",
     "dev": "vite",
@@ -8,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.38.2",
+    "@supabase/supabase-js": "^2.90.0",
     "langchain": "^0.3.33",
     "openai": "4.12.3",
     "react": "19.1.1",

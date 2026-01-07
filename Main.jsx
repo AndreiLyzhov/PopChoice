@@ -1,4 +1,4 @@
-import { openai, supabase } from './config.js';
+// import { supabase } from './utils/config.js';
 import { theMovieDb } from "./themoviedb.js"
 import { useState } from "react";
 import { useEffect } from "react";
@@ -33,12 +33,6 @@ export default function Main(){
             }
         }, [formData])
 
-        // useEffect(() => {
-        //     if (startData) {
-        //         setCurrentUser(new Array(startData.peopleNumber))
-        //     }
-
-        // }, [startData])
 
         function resetApp() {
             setRecommendations([])
@@ -54,30 +48,24 @@ export default function Main(){
 
                 const formattedInput = inputFormat(formData)
 
-                console.log("Done 1")
-
                 const embedding = await createEmbedding(formattedInput)
 
-                console.log("Done 2")
+                console.log(embedding)
 
+                
                 const match = await findNearestMatch(embedding) 
-
-                console.log("Done 3")
 
                 const matchedObjects = match.map(item => content[item.id - 1])
 
                 console.log(matchedObjects)
 
-                console.log("Done 4")
-
+                /*
                 const responses = await Promise.all(
                   match.map(
                     async (item) =>
                       await getExplanation(item.content, formattedInput)
                   )
                 );
-
-                console.log("Done 5")
 
                 const posterUrls = await Promise.all(
                   match.map(async (item) => {
@@ -86,10 +74,10 @@ export default function Main(){
                   })
                 );
 
-                console.log("Done 6")
-
                 setRecommendations({matchedObjects, responses, posterUrls})       
                 setFormData("")
+
+                */
             } catch(e) {
                 console.log("Error in async part of the main function: ", e)
             }
@@ -106,14 +94,6 @@ export default function Main(){
 
             })
 
-            
-
-            // for (let i = 0; i < 4; i++) {
-            //     answers[i] = usersObjects.map(user => {
-            //         return user[questions[i]]
-            //     }).join(". ")
-                
-            // }
 
             questions.map(question => {
                 
@@ -123,129 +103,177 @@ export default function Main(){
 
             return Object.entries(answers).map(answer => answer.join(": ")).join(". \n\n")
             
-            
-
-            // Array.from(userInput).filter(entry => entry[1]).map(item => item.join(': ')).join(". ")
-
         }
         
 
 
-        async function createEmbedding(input) {
-            try {
-                const { data } = await openai.embeddings.create({
-                    model: "text-embedding-ada-002",
-                    input, 
-                })
+        // async function createEmbedding(input) {
+        //     try {
+        //         const { data } = await openai.embeddings.create({
+        //             model: "text-embedding-ada-002",
+        //             input, 
+        //         })
                 
-                return data[0].embedding
-            } catch(e) {
-                console.log("Error while creating Embedding: ", e)
-            }
-        }
-        
-        async function findNearestMatch(embedding) {
-            try {
-                const { data, error } = await supabase.rpc('match_films', {
-                    query_embedding: embedding,
-                    match_threshold: 0.50,
-                    match_count: 4
-                });
-                
-            
-                return data
-                // return data.map(item => item.content)
+        //         return data[0].embedding
+        //     } catch(e) {
+        //         console.log("Error while creating Embedding: ", e)
+        //     }
+        // }
 
-            } catch(e) {
-                console.log("Error while finding nearest: ", e)
-            }
-        }
-        
-        
-        
-        async function getExplanation(context, input) {
+        async function createEmbedding(input){
             try {
-                const messages = [
-                    {
-                        role: "system",
-                        content: `You are enthusiastic movie expert who loves recommending movies to people. 
-                        You will be given two pieces of information - some context about the chosen movie and the user 
-                        input which includes questions for the user and his answers. Your main job is to formulate a short(20-25 words) 
-                        explaination why user should like this movie based on the contex and the user input.`
+                const response = await fetch('/api/create-embedding', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
                     },
-                    {
-                        role: "user",
-                        content: `Context: ${context} User input: ${input}`,
-                    }
-                ]
-                
-                const { choices }= await openai.chat.completions.create({
-                    model: "gpt-3.5-turbo",
-                    messages,
-                    temperature: 0.5,
+                    body: JSON.stringify({input})
                 })
-                
-                console.log("Logging gpt response: ", choices[0].message.content)
-                return choices[0].message.content
-                
-            } catch(e) {
-                console.log("Error while querying GPT: ", e)
+
+                if (!response.ok){
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Server Error');
+                }
+
+                const data = await response.json()
+                return data.embedding
+
+            } catch(error) {
+                console.error("Error while getting embedding:", error.message);
+                // Здесь можно вывести уведомление пользователю
+                return null;
             }
         }
-
         
+        // async function findNearestMatch(embedding) {
+        //     try {
+        //         const { data, error } = await supabase.rpc('match_films', {
+        //             query_embedding: embedding,
+        //             match_threshold: 0.50,
+        //             match_count: 4
+        //         });
+                
+            
+        //         return data
+        //         // return data.map(item => item.content)
 
-        async function getPoster(title) {
+        //     } catch(e) {
+        //         console.log("Error while finding nearest: ", e)
+        //     }
+        // }
+
+        async function findNearestMatch(embedding){
             try {
-                
-            function getFilmId(title) {
-              return new Promise((resolve, reject) => {
-                theMovieDb.search.getMovie(
-                  { query: title },
-                  (response) => resolve(response),
-                  (error) =>
-                    reject(
-                      error || new Error("Unknown TMDB error when getting id")
-                    )
-                );
-              });
+                const response = await fetch('/api/find-nearest-match', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({embedding})
+                })
+
+                if (!response.ok){
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Server Error');
+                }
+
+                const data = await response.json()
+                return data
+
+            } catch(error) {
+                console.error("Error while finding nearest:", error.message);
+                // Здесь можно вывести уведомление пользователю
+                return null;
             }
-
-            function getPosterById(id) {
-              return new Promise((resolve, reject) => {
-                theMovieDb.movies.getImages(
-                  {
-                    id: id,
-                    language: "en-US",
-                    include_image_language: "en,null",
-                  },
-                  (response) => resolve(response),
-                  (error) => reject(error || new Error("Unknown TMDB error when getting poster"))
-                );
-              });
-            }
-
-            let response = await getFilmId(title)
-            let data = JSON.parse(response)
-            const filmId = data.results[0].id
-
-            response = await getPosterById(filmId)
-            data = JSON.parse(response)
-            
-            console.log(data, " - after getting Poster")
-            const posterUrl = data.posters[0].file_path
-            
-            return theMovieDb.common.images_uri + "original" + posterUrl 
-
-            } catch(e) {
-                console.log(e)
-            }
-            
-            
         }
 
 
         
+        
+        
+        // async function getExplanation(context, input) {
+        //     try {
+        //         const messages = [
+        //             {
+        //                 role: "system",
+        //                 content: `You are enthusiastic movie expert who loves recommending movies to people. 
+        //                 You will be given two pieces of information - some context about the chosen movie and the user 
+        //                 input which includes questions for the user and his answers. Your main job is to formulate a short(20-25 words) 
+        //                 explaination why user should like this movie based on the contex and the user input.`
+        //             },
+        //             {
+        //                 role: "user",
+        //                 content: `Context: ${context} User input: ${input}`,
+        //             }
+        //         ]
+                
+        //         const { choices }= await openai.chat.completions.create({
+        //             model: "gpt-3.5-turbo",
+        //             messages,
+        //             temperature: 0.5,
+        //         })
+                
+        //         console.log("Logging gpt response: ", choices[0].message.content)
+        //         return choices[0].message.content
+                
+        //     } catch(e) {
+        //         console.log("Error while querying GPT: ", e)
+        //     }
+        // }
+
+        
+
+        // async function getPoster(title) {
+        //     try {
+                
+        //     function getFilmId(title) {
+        //       return new Promise((resolve, reject) => {
+        //         theMovieDb.search.getMovie(
+        //           { query: title },
+        //           (response) => resolve(response),
+        //           (error) =>
+        //             reject(
+        //               error || new Error("Unknown TMDB error when getting id")
+        //             )
+        //         );
+        //       });
+        //     }
+
+        //     function getPosterById(id) {
+        //       return new Promise((resolve, reject) => {
+        //         theMovieDb.movies.getImages(
+        //           {
+        //             id: id,
+        //             language: "en-US",
+        //             include_image_language: "en,null",
+        //           },
+        //           (response) => resolve(response),
+        //           (error) => reject(error || new Error("Unknown TMDB error when getting poster"))
+        //         );
+        //       });
+        //     }
+
+        //     let response = await getFilmId(title)
+        //     let data = JSON.parse(response)
+        //     const filmId = data.results[0].id
+
+        //     response = await getPosterById(filmId)
+        //     data = JSON.parse(response)
+            
+        //     console.log(data, " - after getting Poster")
+        //     const posterUrl = data.posters[0].file_path
+            
+        //     return theMovieDb.common.images_uri + "original" + posterUrl 
+
+        //     } catch(e) {
+        //         console.log(e)
+        //     }
+            
+            
+        // }
+
+
+        /*
         // async function getQueryForEmbedding(input) {
         //     try {
         //         const messages = [
@@ -275,6 +303,7 @@ export default function Main(){
         //         console.log("Error while querying GPT for embedding query: ", e)
         //     }
         // }
+        */
         
         return (
             <>
