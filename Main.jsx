@@ -59,7 +59,7 @@ export default function Main(){
 
                 console.log(matchedObjects)
 
-                /*
+                
                 const responses = await Promise.all(
                   match.map(
                     async (item) =>
@@ -67,6 +67,9 @@ export default function Main(){
                   )
                 );
 
+                console.log("Explanation: ", responses)
+
+                
                 const posterUrls = await Promise.all(
                   match.map(async (item) => {
                     const movieTitle = content[item.id - 1].title;
@@ -77,7 +80,7 @@ export default function Main(){
                 setRecommendations({matchedObjects, responses, posterUrls})       
                 setFormData("")
 
-                */
+               
             } catch(e) {
                 console.log("Error in async part of the main function: ", e)
             }
@@ -221,56 +224,81 @@ export default function Main(){
         //     }
         // }
 
+        async function getExplanation(context, input){
+            try {
+                const response = await fetch('/api/get-explanation', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({context, input})
+                })
+
+                if (!response.ok){
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Server Error');
+                }
+
+                const { explanation } = await response.json()
+                return explanation
+
+            } catch(error) {
+                console.error("Error while getting explanation:", error.message);
+                // Здесь можно вывести уведомление пользователю
+                return null;
+            }
+        }
+
         
 
-        // async function getPoster(title) {
-        //     try {
+        async function getPoster(title) {
+            try {
                 
-        //     function getFilmId(title) {
-        //       return new Promise((resolve, reject) => {
-        //         theMovieDb.search.getMovie(
-        //           { query: title },
-        //           (response) => resolve(response),
-        //           (error) =>
-        //             reject(
-        //               error || new Error("Unknown TMDB error when getting id")
-        //             )
-        //         );
-        //       });
-        //     }
+            function getFilmId(title) {
+              return new Promise((resolve, reject) => {
+                theMovieDb.search.getMovie(
+                  { query: title },
+                  (response) => resolve(response),
+                  (error) =>
+                    reject(
+                      error || new Error("Unknown TMDB error when getting id")
+                    )
+                );
+              });
+            }
 
-        //     function getPosterById(id) {
-        //       return new Promise((resolve, reject) => {
-        //         theMovieDb.movies.getImages(
-        //           {
-        //             id: id,
-        //             language: "en-US",
-        //             include_image_language: "en,null",
-        //           },
-        //           (response) => resolve(response),
-        //           (error) => reject(error || new Error("Unknown TMDB error when getting poster"))
-        //         );
-        //       });
-        //     }
+            function getPosterById(id) {
+              return new Promise((resolve, reject) => {
+                theMovieDb.movies.getImages(
+                  {
+                    id: id,
+                    language: "en-US",
+                    include_image_language: "en,null",
+                  },
+                  (response) => resolve(response),
+                  (error) => reject(error || new Error("Unknown TMDB error when getting poster"))
+                );
+              });
+            }
 
-        //     let response = await getFilmId(title)
-        //     let data = JSON.parse(response)
-        //     const filmId = data.results[0].id
+            let response = await getFilmId(title)
+            let data = JSON.parse(response)
+            const filmId = data.results[0].id
 
-        //     response = await getPosterById(filmId)
-        //     data = JSON.parse(response)
+            response = await getPosterById(filmId)
+            data = JSON.parse(response)
             
-        //     console.log(data, " - after getting Poster")
-        //     const posterUrl = data.posters[0].file_path
+            console.log(data, " - after getting Poster")
+            const posterUrl = data.posters[0].file_path
             
-        //     return theMovieDb.common.images_uri + "original" + posterUrl 
+            return theMovieDb.common.images_uri + "original" + posterUrl 
 
-        //     } catch(e) {
-        //         console.log(e)
-        //     }
+            } catch(e) {
+                console.log(e)
+            }
             
             
-        // }
+        }
 
 
         /*
