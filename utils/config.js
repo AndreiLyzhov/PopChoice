@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
 import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv"
+dotenv.config()
 
 /** OpenAI config */
 const openaiApiKey = (typeof process !== 'undefined' ? process.env.OPENAI_API_KEY : undefined) || import.meta.env?.VITE_OPENAI_API_KEY;
@@ -15,7 +17,14 @@ const privateKey = (typeof process !== 'undefined' ? process.env.SUPABASE_API_KE
 if (!privateKey) throw new Error(`Expected env var SUPABASE_API_KEY`);
 const url = "https://widegmaevygsmytsotgd.supabase.co"
 // if (!url) throw new Error(`Expected env var SUPABASE_URL`);
-export const supabase = createClient(url, privateKey);
+
+export const supabase = createClient(url, privateKey, {
+  auth: {
+    persistSession: false, // <--- ЭТО ОБЯЗАТЕЛЬНО для скриптов
+    autoRefreshToken: false, // <--- И это, чтобы не висели таймеры
+    detectSessionInUrl: false
+  }
+});
 
 
 

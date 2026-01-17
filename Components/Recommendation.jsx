@@ -7,11 +7,11 @@ export default function Recommendation(props) {
     // console.log(props?.recommendation)
 
 
-    const title = props?.recommendation?.matchedObjects?.[option].title
-    const releaseYear = props?.recommendation?.matchedObjects?.[option].releaseYear
+    const title = props?.recommendation?.match?.[option].metadata.title
+    const releaseYear = props?.recommendation?.match?.[option].metadata.year
     const posterUrl = props?.recommendation?.posterUrls?.[option]
     const response = props?.recommendation?.responses?.[option]
-    const optionsLength = props?.recommendation?.matchedObjects?.length
+    const optionsLength = props?.recommendation?.match?.length
     const isNotFinalOption = (option < optionsLength - 1)
 
     // console.log(optionsLength)
