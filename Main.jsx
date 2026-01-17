@@ -51,6 +51,18 @@ export default function Main(){
                 const formattedInput = inputFormat(formData)
                 console.log("Formatted input for embedding:", formattedInput)
 
+                // Extract movie names from user input to exclude them from recommendations
+                const movieTitles = await extractMovieNames(formattedInput)
+                console.log("Extracted movie titles:", movieTitles)
+                
+                // Find movie IDs in database to exclude
+                let excludeIds = []
+                if (movieTitles && movieTitles.length > 0) {
+                    const foundIds = await findMoviesByTitle(movieTitles)
+                    excludeIds = foundIds || []
+                    console.log("Movie IDs to exclude:", excludeIds)
+                }
+
                 const embedding = await createEmbedding(formattedInput)
                 // const embedding = await createEmbedding('Predator: Badlands (2025): Cast out from his clan, a young Predator finds an unlikely ally in a damaged android and embarks on a treacherous journey in search of the ultimate adversary.. Rated 7.629 on TMDB.')
                 
@@ -58,7 +70,7 @@ export default function Main(){
                 console.log("Embedding: ", embedding)
 
                 
-                const match = await findNearestMatch(embedding) 
+                const match = await findNearestMatch(embedding, excludeIds) 
 
                 console.log("Match: ", match)
 
@@ -203,14 +215,62 @@ export default function Main(){
         //     }
         // }
 
-        async function findNearestMatch(embedding){
+        async function extractMovieNames(input) {
+            try {
+                const response = await fetch('/api/extract-movie-names', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({input})
+                })
+
+                if (!response.ok){
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Server Error');
+                }
+
+                const data = await response.json()
+                return data.movieTitles || []
+
+            } catch(error) {
+                console.error("Error while extracting movie names:", error.message);
+                return [];
+            }
+        }
+
+        async function findMoviesByTitle(movieTitles) {
+            try {
+                const response = await fetch('/api/find-movies-by-title', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({movieTitles})
+                })
+
+                if (!response.ok){
+                    const errorData = await response.json()
+                    throw new Error(errorData.error || 'Server Error');
+                }
+
+                const data = await response.json()
+                return data.movieIds || []
+
+            } catch(error) {
+                console.error("Error while finding movies by title:", error.message);
+                return [];
+            }
+        }
+
+        async function findNearestMatch(embedding, excludeIds = []){
             try {
                 const response = await fetch('/api/find-nearest-match', {
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({embedding})
+                    body: JSON.stringify({embedding, excludeIds})
                 })
 
                 if (!response.ok){
