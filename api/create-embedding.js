@@ -6,6 +6,7 @@ export default async function handler(req, res) {
         return res.status(405).json({error: "Method not allowed"})
     }
     const { input } = req.body;
+    console.log("Embedding creation input: ", input)
 
     if (!input) {
         return res.status(400).json({ error: "Input is required" });
@@ -13,7 +14,8 @@ export default async function handler(req, res) {
   
     try {
         const { data } = await openai.embeddings.create({
-            model: "text-embedding-ada-002",
+            // model: "text-embedding-ada-002",
+            model: "text-embedding-3-small",
             input, 
         })
       console.log("succesfully created embedding")

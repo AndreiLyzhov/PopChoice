@@ -26,7 +26,7 @@ export default function StartingForm(props) {
                     className="input starting" 
                     name="people-number" 
                     placeholder="How mane people?" 
-                    defaultValue="5"
+                    defaultValue="1"
                     required
                 ></input>
                 

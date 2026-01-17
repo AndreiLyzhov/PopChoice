@@ -1,14 +1,16 @@
-// import { supabase } from './utils/config.js';
+// import { openai, supabase } from './utils/config.js';
 import { theMovieDb } from "./themoviedb.js"
 import { useState } from "react";
 import { useEffect } from "react";
 import { useRef } from "react";
 
-import StartingForm from "./StartingForm.jsx"
-import MainForm from './MainForm.jsx';
-import Recommendation from "./Recommendation.jsx";
-import { content } from "./content.js"
+import StartingForm from "./Components/StartingForm.jsx"
+import MainForm from './Components/MainForm.jsx';
+import Recommendation from "./Components/Recommendation.jsx";
+import { content } from "./Database/content.js"
 import { index } from 'langchain/indexes';
+
+
 
 
 
@@ -35,7 +37,7 @@ export default function Main(){
 
 
         function resetApp() {
-            setRecommendations([])
+            setRecommendations("")
             setFormData("")
             setStartData(null)
             setCurrentUser(null)
@@ -47,17 +49,22 @@ export default function Main(){
             try {         
 
                 const formattedInput = inputFormat(formData)
+                console.log("Formatted input for embedding:", formattedInput)
 
                 const embedding = await createEmbedding(formattedInput)
+                // const embedding = await createEmbedding('Predator: Badlands (2025): Cast out from his clan, a young Predator finds an unlikely ally in a damaged android and embarks on a treacherous journey in search of the ultimate adversary.. Rated 7.629 on TMDB.')
+                
 
-                console.log(embedding)
+                console.log("Embedding: ", embedding)
 
                 
                 const match = await findNearestMatch(embedding) 
 
-                const matchedObjects = match.map(item => content[item.id - 1])
+                console.log("Match: ", match)
 
-                console.log(matchedObjects)
+                // const matchedObjects = match.map((_,index) => content[index])
+                
+                // console.log("Matched Objects: ", matchedObjects)
 
                 
                 const responses = await Promise.all(
@@ -71,13 +78,14 @@ export default function Main(){
 
                 
                 const posterUrls = await Promise.all(
-                  match.map(async (item) => {
-                    const movieTitle = content[item.id - 1].title;
+                  match.map(async (item, index) => {
+                    const movieTitle = item.metadata.title;
+                    console.log("movieTitle", movieTitle)
                     return await getPoster(movieTitle);
                   })
                 );
 
-                setRecommendations({matchedObjects, responses, posterUrls})       
+                setRecommendations({match, responses, posterUrls})       
                 setFormData("")
 
                
@@ -104,7 +112,37 @@ export default function Main(){
                     .filter(answer => answer).join(". ")
             })
 
-            return Object.entries(answers).map(answer => answer.join(": ")).join(". \n\n")
+            // Convert Q&A format to natural language preference description
+            // This format better matches the semantic structure of film descriptions
+            // Remove structured Q&A format and create natural narrative text
+            const naturalPreferences = Object.entries(answers)
+                .filter(([_, answer]) => answer && answer.trim())
+                .map(([question, answer]) => {
+                    // Convert question format to natural context
+                    const cleanQuestion = question
+                        .replace(/-/g, ' ')
+                        .replace(/\?/g, '')
+                        .toLowerCase();
+                    
+                    // Create natural preference statements based on question type
+                    if (cleanQuestion.includes('favourite movie')) {
+                        return `User's favourite movie is ${answer}`;
+                    } else if (cleanQuestion.includes('new or classic')) {
+                        return `User prefers ${answer.toLowerCase()} movies`;
+                    } else if (cleanQuestion.includes('mood for')) {
+                        return `User is in the mood for ${answer.toLowerCase()} movies`;
+                    } else if (cleanQuestion.includes('famous film person')) {
+                        return `User likes movies with ${answer}`;
+                    } else {
+                        // Generic fallback: create natural sentence
+                        return `User prefers ${answer}`;
+                    }
+                })
+                .filter(statement => statement.trim());
+
+            // Join into a cohesive narrative description
+            // This reads like natural text, similar to film descriptions
+            return naturalPreferences.join('. ');
             
         }
         
@@ -113,7 +151,7 @@ export default function Main(){
         // async function createEmbedding(input) {
         //     try {
         //         const { data } = await openai.embeddings.create({
-        //             model: "text-embedding-ada-002",
+        //             model: "text-embedding-3-small",
         //             input, 
         //         })
                 

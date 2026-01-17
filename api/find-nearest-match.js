@@ -30,7 +30,7 @@ export default async function handler(req, res) {
             const url = new URL(`${supabaseUrl}/rest/v1/rpc/match_films`);
             const postData = JSON.stringify({
                 query_embedding: embedding,
-                match_threshold: 0.50,
+                match_threshold: 0.3,
                 match_count: 4
             });
 

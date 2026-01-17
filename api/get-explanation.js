@@ -32,7 +32,7 @@ export default async function handler(req, res) {
             temperature: 0.5,
         })
         
-        console.log("Logging gpt response: ", choices[0].message.content)
+        // console.log("Logging gpt response: ", choices[0].message.content)
         res.status(200).json({explanation: choices[0].message.content});
   
       
