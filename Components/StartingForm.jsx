@@ -1,15 +1,22 @@
+import { Form, useNavigate } from 'react-router-dom';
+import { setStartData } from '../utils/sessionStorage.js';
 
+export default function StartingForm() {
+    const navigate = useNavigate();
 
-export default function StartingForm(props) {
-
-    function startApp(formData) {
-        const timeAmount = formData.get("hours-amount") * 60 + +formData.get("minutes-amount")
-    
-        props.setStartData({
+    async function handleSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        
+        const timeAmount = formData.get("hours-amount") * 60 + +formData.get("minutes-amount");
+        
+        const startData = {
             peopleNumber: +formData.get("people-number"),
             timeAmount: +timeAmount,
-        })
+        };
 
+        setStartData(startData);
+        navigate(`/form/1`);
     }
 
     return (
@@ -19,8 +26,7 @@ export default function StartingForm(props) {
                 <p>Pop Choice</p>
             </header>
 
-            <form action={startApp}>
-                
+            <form onSubmit={handleSubmit}>
                 <input 
                     type="number" 
                     className="input starting" 
@@ -32,7 +38,6 @@ export default function StartingForm(props) {
                 
                 <label>How much time do you have?</label>
                 <div className="input starting time-container">
-
                     <input 
                         className="time-input" 
                         type="number" 
@@ -52,11 +57,10 @@ export default function StartingForm(props) {
                         required
                     ></input>
                     <span>minutes</span>
-
                 </div>
                 
-                <button>Start</button>
+                <button type="submit">Start</button>
             </form>
         </>
-    )
+    );
 }
