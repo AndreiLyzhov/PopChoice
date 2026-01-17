@@ -6,11 +6,14 @@ export default async function handler(req, res) {
     if (req.method !== "POST") {
         return res.status(405).json({error: "Method not allowed"})
     }
-    const { embedding } = req.body;
+    const { embedding, excludeIds } = req.body;
 
     if (!embedding) {
         return res.status(400).json({ error: "Input is required" });
     }
+    
+    // excludeIds should be an array of film IDs to exclude
+    const excludeIdsArray = Array.isArray(excludeIds) ? excludeIds : [];
 
     // Use native https module instead of fetch to avoid Vercel serverless stream issues
     // Fetch API has known issues with response body streams in serverless environments
@@ -31,7 +34,8 @@ export default async function handler(req, res) {
             const postData = JSON.stringify({
                 query_embedding: embedding,
                 match_threshold: 0.3,
-                match_count: 4
+                match_count: 4,
+                exclude_ids: excludeIdsArray.length > 0 ? excludeIdsArray : null
             });
 
             const options = {
