@@ -75,17 +75,17 @@ export async function findMoviesByTitle(movieTitles) {
     }
 }
 
-export async function findNearestMatch(embedding, excludeIds = []){
+export async function findNearestMatch(embedding, excludeIds = [], preferences = null) {
     try {
         const response = await fetch('/api/find-nearest-match', {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({embedding, excludeIds})
+            body: JSON.stringify({ embedding, excludeIds, preferences })
         })
 
-        if (!response.ok){
+        if (!response.ok) {
             const errorData = await response.json()
             throw new Error(errorData.error || 'Server Error');
         }
@@ -93,9 +93,33 @@ export async function findNearestMatch(embedding, excludeIds = []){
         const data = await response.json()
         return data
 
-    } catch(error) {
+    } catch (error) {
         console.error("Error while finding nearest:", error.message);
         throw error;
+    }
+}
+
+export async function getMovieDescription(title) {
+    try {
+        const response = await fetch('/api/get-movie-description', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title })
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Server Error');
+        }
+
+        const data = await response.json()
+        return data.description || null
+
+    } catch (error) {
+        console.error("Error while getting movie description:", error.message);
+        return null;
     }
 }
 
