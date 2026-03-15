@@ -7,8 +7,8 @@ export default async function handler(req, res) {
     }
     const { input } = req.body;
 
-    if (!input) {
-        return res.status(400).json({ error: "Input is required" });
+    if (!input || typeof input !== 'string' || input.trim().length === 0) {
+        return res.status(400).json({ error: "Input is required and must be a non-empty string" });
     }
   
     try {

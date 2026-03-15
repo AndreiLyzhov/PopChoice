@@ -5,28 +5,24 @@ export default function MainForm() {
     const { userNumber } = useParams();
     const navigate = useNavigate();
     const currentUser = parseInt(userNumber, 10);
-    
+
     const startData = getStartData();
-    
-    // If no start data, redirect to home
-    if (!startData) {
+
+    // Redirect if invalid state
+    if (!startData || isNaN(currentUser) || currentUser < 1 || currentUser > startData.peopleNumber) {
         navigate('/', { replace: true });
         return null;
     }
-
-    const formData = []; // We'll get this from sessionStorage if needed, but we're building it incrementally
-    const currentUserIndex = currentUser - 1;
 
     function handleSubmit(event) {
         event.preventDefault();
         const formDataObj = new FormData(event.target);
         const currentFormData = new Map();
-        
+
         // Convert FormData to Map
         for (const [key, value] of formDataObj.entries()) {
             currentFormData.set(key, value);
         }
-
 
         // Add to sessionStorage
         addFormDataEntry(currentFormData);
@@ -40,21 +36,21 @@ export default function MainForm() {
             navigate(`/form/${currentUser + 1}`);
         }
     }
-    
+
     return (
         <>
             <header>
                 <img src="/PopChoiceIcon.png"/>
                 <p>Pop Choice</p>
             </header>
-        
+
             <form onSubmit={handleSubmit}>
                 <p className="current-user">{currentUser}</p>
 
                 <label>What's your favourite movie? What type of movie would you like to watch?</label>
                 <textarea className="input" name="what's-your-favourite-movie-and-why?" defaultValue="Harry Potter"></textarea>
-                
-                <label>Are you in the mood for something new or classic?</label>  
+
+                <label>Are you in the mood for something new or classic?</label>
                 <div className="radio-container">
                     <input type="radio" id={`new-${currentUser}`} name="are-you-in-the-mood-for-something-new-or-classic?" value="New" defaultChecked></input>
                     <label htmlFor={`new-${currentUser}`} className="radio-label">New</label>
@@ -63,8 +59,8 @@ export default function MainForm() {
                     <label htmlFor={`classic-${currentUser}`} className="radio-label">Classic</label>
                 </div>
 
-                
-                <label>What are you in the mood for?</label>  
+
+                <label>What are you in the mood for?</label>
                 <div className="radio-container">
                     <input type="radio" id={`fun-${currentUser}`} name="what-are-you-in-the-mood-for?" value="Fun" defaultChecked></input>
                     <label htmlFor={`fun-${currentUser}`} className="radio-label">Fun</label>
@@ -80,9 +76,6 @@ export default function MainForm() {
                 </div>
 
 
-                {/* <el>Which famous film person would you love to be stranded on an island with and why?</label>   */}
-                {/* <textarea className="input" name="which-famous-film-person-would-you-love-to-be-stranded-on-an-island-with-and-why?" defaultValue="Tom Hanks"></textarea> */}
-                
                 <button type="submit">Let's Go</button>
             </form>
         </>

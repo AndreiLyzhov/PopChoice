@@ -20,24 +20,19 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Title is required" });
     }
 
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_API_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        return res.status(500).json({
+            error: "Supabase configuration not found in environment variables"
+        });
+    }
+
     return new Promise((resolve) => {
         try {
-            console.log("Looking up movie description for:", title);
-
-            const supabaseUrl = process.env.SUPABASE_URL || "https://widegmaevygsmytsotgd.supabase.co";
-            const supabaseKey = process.env.SUPABASE_API_KEY || process.env.VITE_SUPABASE_API_KEY;
-
-            if (!supabaseKey) {
-                return resolve(res.status(500).json({
-                    error: "Supabase API key not found in environment variables"
-                }));
-            }
-
-            // Search for film by title (case-insensitive partial match using ilike)
-            // We use the metadata->title field for matching
             const searchTerm = title.toLowerCase().trim();
 
-            // Use PostgREST text search on metadata
             const url = new URL(`${supabaseUrl}/rest/v1/films`);
             url.searchParams.set('select', 'id,content,metadata');
             url.searchParams.set('limit', '1');
@@ -65,17 +60,13 @@ export default async function handler(req, res) {
 
                 httpsRes.on('end', async () => {
                     if (httpsRes.statusCode !== 200) {
-                        console.error("Supabase error:", responseData);
-                        // Fall back to searching all films
                         return searchAllFilms(supabaseUrl, supabaseKey, searchTerm, res, resolve);
                     }
 
                     try {
                         const films = JSON.parse(responseData);
 
-                        // If we got results, find best match
                         if (films && films.length > 0) {
-                            // Find film where metadata title matches
                             const matchedFilm = findBestMatch(films, searchTerm);
                             if (matchedFilm) {
                                 return resolve(res.status(200).json({
@@ -85,16 +76,13 @@ export default async function handler(req, res) {
                             }
                         }
 
-                        // No direct match, search all films
                         return searchAllFilms(supabaseUrl, supabaseKey, searchTerm, res, resolve);
                     } catch (parseError) {
-                        console.error("Parse error:", parseError);
                         return resolve(res.status(200).json({ description: null }));
                     }
                 });
 
-                httpsRes.on('error', (error) => {
-                    console.error("Response error:", error);
+                httpsRes.on('error', () => {
                     return resolve(res.status(200).json({ description: null }));
                 });
             });
@@ -104,15 +92,13 @@ export default async function handler(req, res) {
                 return resolve(res.status(200).json({ description: null }));
             });
 
-            httpsReq.on('error', (error) => {
-                console.error("Request error:", error);
+            httpsReq.on('error', () => {
                 return resolve(res.status(200).json({ description: null }));
             });
 
             httpsReq.end();
 
         } catch (error) {
-            console.error("Error in get-movie-description:", error);
             return resolve(res.status(200).json({ description: null }));
         }
     });
@@ -148,7 +134,6 @@ function searchAllFilms(supabaseUrl, supabaseKey, searchTerm, res, resolve) {
 
         httpsRes.on('end', () => {
             if (httpsRes.statusCode !== 200) {
-                console.error("Supabase search error:", responseData);
                 return resolve(res.status(200).json({ description: null }));
             }
 
@@ -163,16 +148,13 @@ function searchAllFilms(supabaseUrl, supabaseKey, searchTerm, res, resolve) {
                     }));
                 }
 
-                // No match found
                 return resolve(res.status(200).json({ description: null }));
             } catch (parseError) {
-                console.error("Parse error:", parseError);
                 return resolve(res.status(200).json({ description: null }));
             }
         });
 
-        httpsRes.on('error', (error) => {
-            console.error("Response error:", error);
+        httpsRes.on('error', () => {
             return resolve(res.status(200).json({ description: null }));
         });
     });
@@ -182,8 +164,7 @@ function searchAllFilms(supabaseUrl, supabaseKey, searchTerm, res, resolve) {
         return resolve(res.status(200).json({ description: null }));
     });
 
-    httpsReq.on('error', (error) => {
-        console.error("Request error:", error);
+    httpsReq.on('error', () => {
         return resolve(res.status(200).json({ description: null }));
     });
 
@@ -229,7 +210,6 @@ function findBestMatch(films, searchTerm) {
             const filmTitle = film.metadata.title.toLowerCase().trim();
             const titleWords = filmTitle.split(/\s+/).filter(w => w.length > 2);
 
-            // Count matching words
             let matchCount = 0;
             for (const searchWord of searchWords) {
                 for (const titleWord of titleWords) {

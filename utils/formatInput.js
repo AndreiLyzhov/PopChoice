@@ -47,11 +47,16 @@ export function inputFormat(formData, movieDescriptions = {}) {
                 const description = movieDescriptions[movieTitle] || movieDescriptions[movieTitle.toLowerCase()];
 
                 if (description) {
-                    // Use the actual film description for semantic matching
-                    return `User loves films like: ${description}`;
+                    // Strip out the title and year from the beginning of the description
+                    // Format is: "Movie Title (YEAR): description..."
+                    const strippedDescription = description.replace(/^[^:]+:\s*/, '');
+
+                    // Use only the description for semantic matching (no title)
+                    return `User loves films like: ${strippedDescription}`;
                 } else {
-                    // Fallback to just the title
-                    return `User's favourite movie is ${answer}`;
+                    // If no description available, we can't do semantic matching
+                    // Return empty to exclude this from embedding
+                    return null;
                 }
             } else if (cleanQuestion.includes('famous film person')) {
                 return `User likes movies with ${answer}`;

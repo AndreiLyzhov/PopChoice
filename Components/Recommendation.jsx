@@ -37,9 +37,9 @@ export default function Recommendation() {
     
     return (
         <div className="recommendation-container">
-            <p className="recommendation-title">{`${title} (${releaseYear})`}</p> 
-            <img className="poster" src={posterUrl} alt={`Poster for ${title}`}></img>
-            <p className="recommendation-description">{response}</p> 
+            <p className="recommendation-title">{`${title} (${releaseYear})`}</p>
+            {posterUrl && <img className="poster" src={posterUrl} alt={`Poster for ${title}`}></img>}
+            <p className="recommendation-description">{response}</p>
             <button onClick={clickHandler}>{isNotFinalOption ? "Next Option" : "Go Again"}</button>
         </div>
     );

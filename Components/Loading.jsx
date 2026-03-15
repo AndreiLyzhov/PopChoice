@@ -7,33 +7,33 @@ export default function Loading() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        let cancelled = false;
+
         async function loadRecommendations() {
             try {
                 const formData = getFormData();
-                
+
                 if (!formData || formData.length === 0) {
-                    // No form data, redirect to start
-                    navigate('/', { replace: true });
+                    if (!cancelled) navigate('/', { replace: true });
                     return;
                 }
 
-                // Process recommendations
                 const result = await processRecommendations(formData);
-                
-                // Store results
+
+                if (cancelled) return;
+
                 setRecommendation(result);
-                
-                // Navigate to recommendations
                 navigate('/recommendations', { replace: true });
             } catch (error) {
-                console.error('Error loading recommendations:', error);
-                // On error, redirect to start and clear data
+                if (cancelled) return;
                 clearAll();
                 navigate('/', { replace: true, state: { error: 'Failed to load recommendations. Please try again.' } });
             }
         }
 
         loadRecommendations();
+
+        return () => { cancelled = true; };
     }, [navigate]);
 
     return (

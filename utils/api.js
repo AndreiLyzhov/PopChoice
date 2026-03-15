@@ -3,146 +3,119 @@
  */
 
 export async function createEmbedding(input) {
-    try {
-        const response = await fetch('/api/create-embedding', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({input})
-        })
+    const response = await fetch('/api/create-embedding', {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({input})
+    })
 
-        if (!response.ok){
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
-        }
-
-        const data = await response.json()
-        return data.embedding
-
-    } catch(error) {
-        console.error("Error while getting embedding:", error.message);
-        throw error;
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Server Error');
     }
+
+    const data = await response.json()
+    return data.embedding
 }
 
 export async function extractMovieNames(input) {
-    try {
-        console.log(input)
-        const response = await fetch('/api/extract-movie-names', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({input})
-        })
+    const response = await fetch('/api/extract-movie-names', {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({input})
+    })
 
-        if (!response.ok){
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
-        }
-
-        const data = await response.json()
-        return data.movieTitles || []
-
-    } catch(error) {
-        console.error("Error while extracting movie names:", error.message);
-        throw error;
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Server Error');
     }
+
+    const data = await response.json()
+    return data.movieTitles || []
 }
 
 export async function findMoviesByTitle(movieTitles) {
-    try {
-        const response = await fetch('/api/find-movies-by-title', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({movieTitles})
-        })
+    const response = await fetch('/api/find-movies-by-title', {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({movieTitles})
+    })
 
-        if (!response.ok){
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
-        }
-
-        const data = await response.json()
-        return data.movieIds || []
-
-    } catch(error) {
-        console.error("Error while finding movies by title:", error.message);
-        throw error;
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Server Error');
     }
+
+    const data = await response.json()
+    return data.movieIds || []
 }
 
 export async function findNearestMatch(embedding, excludeIds = [], preferences = null) {
-    try {
-        const response = await fetch('/api/find-nearest-match', {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ embedding, excludeIds, preferences })
-        })
+    const response = await fetch('/api/find-nearest-match', {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embedding, excludeIds, preferences })
+    })
 
-        if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
-        }
-
-        const data = await response.json()
-        return data
-
-    } catch (error) {
-        console.error("Error while finding nearest:", error.message);
-        throw error;
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Server Error');
     }
+
+    const data = await response.json()
+    return data
 }
 
 export async function getMovieDescription(title) {
     try {
         const response = await fetch('/api/get-movie-description', {
             method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title })
         })
 
         if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
+            return null;
         }
 
         const data = await response.json()
         return data.description || null
-
     } catch (error) {
-        console.error("Error while getting movie description:", error.message);
         return null;
     }
 }
 
-export async function getExplanation(context, input){
+export async function getExplanation(context, input) {
+    const response = await fetch('/api/get-explanation', {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({context, input})
+    })
+
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Server Error');
+    }
+
+    const { explanation } = await response.json()
+    return explanation
+}
+
+export async function getPoster(title, year) {
     try {
-        const response = await fetch('/api/get-explanation', {
+        const response = await fetch('/api/get-poster', {
             method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({context, input})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, year })
         })
 
-        if (!response.ok){
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Server Error');
+        if (!response.ok) {
+            return null;
         }
 
-        const { explanation } = await response.json()
-        return explanation
-
-    } catch(error) {
-        console.error("Error while getting explanation:", error.message);
-        throw error;
+        const data = await response.json()
+        return data.posterUrl || null
+    } catch (error) {
+        return null;
     }
 }
