@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { getStartData, addFormDataEntry } from '../utils/sessionStorage.js';
+import { getStartData, addFormDataEntry, removeLastFormDataEntry } from '../utils/sessionStorage.js';
 
 export default function MainForm() {
     const { userNumber } = useParams();
@@ -35,6 +35,11 @@ export default function MainForm() {
             // Navigate to next user
             navigate(`/form/${currentUser + 1}`);
         }
+    }
+
+    function handlePrevious() {
+        removeLastFormDataEntry();
+        navigate(`/form/${currentUser - 1}`);
     }
 
     return (
@@ -76,7 +81,10 @@ export default function MainForm() {
                 </div>
 
 
-                <button type="submit">Let's Go</button>
+                <div className={`button-group${currentUser > 1 ? ' has-two' : ''}`}>
+                    {currentUser > 1 && <button type="button" onClick={handlePrevious}>Previous User</button>}
+                    <button type="submit">{currentUser < startData.peopleNumber ? "Next User" : "Let's Go"}</button>
+                </div>
             </form>
         </>
     );

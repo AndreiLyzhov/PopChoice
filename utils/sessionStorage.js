@@ -61,6 +61,12 @@ export function addFormDataEntry(entry) {
     setFormData(current);
 }
 
+export function removeLastFormDataEntry() {
+    const current = getFormData();
+    current.pop();
+    setFormData(current);
+}
+
 export function getRecommendation() {
     const data = sessionStorage.getItem(KEYS.RECOMMENDATION);
     if (!data) return null;

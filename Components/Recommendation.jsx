@@ -24,23 +24,30 @@ export default function Recommendation() {
     const response = recommendation?.responses?.[option];
     const optionsLength = recommendation?.match?.length || 0;
     const isNotFinalOption = (option < optionsLength - 1);
+    const isNotFirstOption = (option > 0);
 
-    function clickHandler() {
+    function nextHandler() {
         if (isNotFinalOption) {
             setOption(prev => prev + 1);
         } else {
-            // Clear all data and navigate to start
             clearAll();
             navigate('/');
         }
     }
-    
+
+    function prevHandler() {
+        setOption(prev => prev - 1);
+    }
+
     return (
         <div className="recommendation-container">
             <p className="recommendation-title">{`${title} (${releaseYear})`}</p>
             {posterUrl && <img className="poster" src={posterUrl} alt={`Poster for ${title}`}></img>}
             <p className="recommendation-description">{response}</p>
-            <button onClick={clickHandler}>{isNotFinalOption ? "Next Option" : "Go Again"}</button>
+            <div className={`button-group${isNotFirstOption ? ' has-two' : ''}`}>
+                {isNotFirstOption && <button onClick={prevHandler}>Previous Option</button>}
+                <button onClick={nextHandler}>{isNotFinalOption ? "Next Option" : "Go Again"}</button>
+            </div>
         </div>
     );
 }
