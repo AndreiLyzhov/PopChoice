@@ -42,10 +42,14 @@ function httpsRequest(url, options, postData) {
  */
 async function getCollectionIds(filmIds, supabaseUrl, supabaseKey) {
     if (!filmIds || filmIds.length === 0) {
+        console.log("getCollectionIds: No film IDs provided");
         return [];
     }
 
+    console.log("getCollectionIds: Fetching for film IDs:", filmIds);
+
     const baseUrl = new URL(`${supabaseUrl}/rest/v1/films`);
+    // Build path manually to avoid URL encoding issues with PostgREST syntax
     const path = `/rest/v1/films?select=collection_id&id=in.(${filmIds.join(',')})`;
 
     const options = {
@@ -60,13 +64,19 @@ async function getCollectionIds(filmIds, supabaseUrl, supabaseKey) {
         }
     };
 
+    console.log("getCollectionIds: Request path:", path);
+
     try {
         const data = await httpsRequest(baseUrl, options);
+        console.log("getCollectionIds: Raw response:", JSON.stringify(data));
+        // Extract unique non-null collection IDs
         const collectionIds = data
             .map(row => row.collection_id)
             .filter(id => id !== null);
+        console.log("getCollectionIds: Found collection IDs:", collectionIds);
         return [...new Set(collectionIds)];
     } catch (error) {
+        console.error('Error fetching collection IDs:', error.message);
         return [];
     }
 }
@@ -82,8 +92,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Embedding array is required" });
     }
 
+    // excludeIds should be an array of film IDs to exclude
     const excludeIdsArray = Array.isArray(excludeIds) ? excludeIds : [];
 
+    // Extract preference coefficients with defaults
     const prefs = preferences || {};
     const prefEraNew = typeof prefs.eraNew === 'number' ? prefs.eraNew : 0.5;
     const prefEraClassic = typeof prefs.eraClassic === 'number' ? prefs.eraClassic : 0.5;
@@ -102,17 +114,30 @@ export default async function handler(req, res) {
         });
     }
 
+    // Fetch collection IDs for excluded films to also exclude other films in the same series
     let excludeCollectionIds = [];
+    console.log("excludeIdsArray:", excludeIdsArray);
     if (excludeIdsArray.length > 0) {
         try {
             excludeCollectionIds = await getCollectionIds(excludeIdsArray, supabaseUrl, supabaseKey);
+            console.log("Exclude collection IDs:", excludeCollectionIds);
         } catch (error) {
+            console.error("Error fetching collection IDs:", error.message);
             // Continue without collection exclusion if this fails
         }
+    } else {
+        console.log("No excludeIds provided, skipping collection lookup");
     }
 
+    // Use native https module instead of fetch to avoid Vercel serverless stream issues
+    // Fetch API has known issues with response body streams in serverless environments
     return new Promise((resolve) => {
         try {
+            console.log("Starting match_films_v2 RPC call with native https...");
+            console.log("Preferences:", { prefEraNew, prefEraClassic, prefMoodFun, prefMoodSerious, prefMoodInspiring, prefMoodScary });
+            console.log("RPC params - exclude_ids:", excludeIdsArray.length > 0 ? excludeIdsArray : null);
+            console.log("RPC params - exclude_collection_ids:", excludeCollectionIds.length > 0 ? excludeCollectionIds : null);
+
             const url = new URL(`${supabaseUrl}/rest/v1/rpc/match_films_v2`);
             const postData = JSON.stringify({
                 query_embedding: embedding,
@@ -142,13 +167,17 @@ export default async function handler(req, res) {
                     'Prefer': 'return=representation',
                     'Connection': 'close'
                 },
-                timeout: 20000
+                timeout: 20000 // 20 second timeout
             };
 
             const httpsReq = https.request(options, (httpsRes) => {
+                console.log("HTTPS response status:", httpsRes.statusCode);
+
                 let responseData = '';
 
+                // Set timeout for reading response body
                 const bodyTimeout = setTimeout(() => {
+                    console.error("Response body read timeout");
                     httpsRes.destroy();
                     return resolve(res.status(504).json({
                         error: "Response timeout",
@@ -162,8 +191,10 @@ export default async function handler(req, res) {
 
                 httpsRes.on('end', () => {
                     clearTimeout(bodyTimeout);
+                    console.log("Response body received, length:", responseData.length);
 
                     if (httpsRes.statusCode !== 200) {
+                        console.error("Supabase RPC Error Response:", responseData);
                         return resolve(res.status(httpsRes.statusCode || 500).json({
                             error: "Database query failed"
                         }));
@@ -171,8 +202,11 @@ export default async function handler(req, res) {
 
                     try {
                         const data = JSON.parse(responseData);
+                        console.log("Successfully parsed JSON response, items:", Array.isArray(data) ? data.length : 'not array');
                         return resolve(res.status(200).json(data));
                     } catch (parseError) {
+                        console.error("JSON parse error:", parseError);
+                        console.error("Response preview:", responseData.substring(0, 500));
                         return resolve(res.status(500).json({
                             error: "Failed to parse response",
                             message: parseError.message
@@ -182,6 +216,7 @@ export default async function handler(req, res) {
 
                 httpsRes.on('error', (error) => {
                     clearTimeout(bodyTimeout);
+                    console.error("Response stream error:", error);
                     return resolve(res.status(500).json({
                         error: "Response stream error",
                         message: error.message
@@ -190,6 +225,7 @@ export default async function handler(req, res) {
             });
 
             httpsReq.on('timeout', () => {
+                console.error("Request timeout");
                 httpsReq.destroy();
                 return resolve(res.status(504).json({
                     error: "Request timeout",
@@ -198,6 +234,7 @@ export default async function handler(req, res) {
             });
 
             httpsReq.on('error', (error) => {
+                console.error("Request error:", error);
                 return resolve(res.status(500).json({
                     error: "Request error",
                     message: error.message
@@ -208,6 +245,7 @@ export default async function handler(req, res) {
             httpsReq.end();
 
         } catch (error) {
+            console.error("Error in find-nearest-match:", error);
             return resolve(res.status(500).json({
                 error: "Server Error while finding nearest",
                 message: error.message

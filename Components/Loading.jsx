@@ -14,18 +14,25 @@ export default function Loading() {
                 const formData = getFormData();
 
                 if (!formData || formData.length === 0) {
+                    // No form data, redirect to start
                     if (!cancelled) navigate('/', { replace: true });
                     return;
                 }
 
+                // Process recommendations
                 const result = await processRecommendations(formData);
 
                 if (cancelled) return;
 
+                // Store results
                 setRecommendation(result);
+
+                // Navigate to recommendations
                 navigate('/recommendations', { replace: true });
             } catch (error) {
+                console.error('Error loading recommendations:', error);
                 if (cancelled) return;
+                // On error, redirect to start and clear data
                 clearAll();
                 navigate('/', { replace: true, state: { error: 'Failed to load recommendations. Please try again.' } });
             }

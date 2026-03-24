@@ -1,5 +1,51 @@
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+import https from 'https';
+
+const TMDB_BASE_URL = "api.themoviedb.org";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
+
+function tmdbSearch(query, year, apiKey) {
+    return new Promise((resolve, reject) => {
+        let path = `/3/search/movie?api_key=${apiKey}&language=en-US&query=${encodeURIComponent(query)}`;
+        if (year) {
+            path += `&year=${year}`;
+        }
+
+        const options = {
+            hostname: TMDB_BASE_URL,
+            port: 443,
+            path: path,
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Connection': 'close'
+            },
+            timeout: 10000
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    try {
+                        resolve(JSON.parse(data));
+                    } catch (e) {
+                        reject(new Error(`Failed to parse TMDB response: ${e.message}`));
+                    }
+                } else {
+                    reject(new Error(`TMDB request failed with status ${res.statusCode}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('TMDB request timeout'));
+        });
+        req.end();
+    });
+}
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -20,31 +66,14 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Search with year first for better results
-        let searchUrl = `${TMDB_BASE_URL}/search/movie?api_key=${tmdbApiKey}&language=en-US&query=${encodeURIComponent(title)}`;
-        if (year) {
-            searchUrl += `&year=${year}`;
-        }
-
-        console.log("get-poster: fetching TMDB search");
-        let response = await fetch(searchUrl);
-        if (!response.ok) {
-            console.error("get-poster: TMDB search failed with status", response.status);
-            return res.status(200).json({ posterUrl: null });
-        }
-
-        let data = await response.json();
+        // Search with year first
+        let data = await tmdbSearch(title, year, tmdbApiKey);
         console.log("get-poster: TMDB returned", data.results?.length, "results");
 
         // If no results with year filter, retry without year
         if ((!data.results || data.results.length === 0) && year) {
             console.log("get-poster: retrying without year filter");
-            const fallbackUrl = `${TMDB_BASE_URL}/search/movie?api_key=${tmdbApiKey}&language=en-US&query=${encodeURIComponent(title)}`;
-            response = await fetch(fallbackUrl);
-            if (!response.ok) {
-                return res.status(200).json({ posterUrl: null });
-            }
-            data = await response.json();
+            data = await tmdbSearch(title, null, tmdbApiKey);
             console.log("get-poster: fallback returned", data.results?.length, "results");
         }
 
@@ -53,7 +82,7 @@ export default async function handler(req, res) {
             return res.status(200).json({ posterUrl: null });
         }
 
-        // Find the film that matches the year (allow +/-1 year tolerance for regional differences)
+        // Find the film that matches the year (allow +/-1 year tolerance)
         let matchedFilm = null;
         if (year) {
             for (const result of data.results) {

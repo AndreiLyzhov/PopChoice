@@ -6,6 +6,7 @@ export default async function handler(req, res) {
         return res.status(405).json({error: "Method not allowed"})
     }
     const { input } = req.body;
+    console.log("Embedding creation input: ", input)
 
     if (!input || typeof input !== 'string' || input.trim().length === 0) {
         return res.status(400).json({ error: "Input is required and must be a non-empty string" });
@@ -16,6 +17,7 @@ export default async function handler(req, res) {
             model: "text-embedding-3-small",
             input,
         })
+      console.log("succesfully created embedding")
 
       res.status(200).json({embedding: data[0].embedding});
     } catch (error) {

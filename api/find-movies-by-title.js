@@ -21,11 +21,16 @@ export default async function handler(req, res) {
         });
     }
 
+    // Use native https module for Supabase REST API calls
     return new Promise((resolve) => {
         try {
+            console.log("Searching for movies by title:", movieTitles);
+
+            // Query all films and filter in memory
+            // This is acceptable if the dataset is ~4000 films
             const url = new URL(`${supabaseUrl}/rest/v1/films`);
             url.searchParams.append('select', 'id,metadata');
-            url.searchParams.append('limit', '5000');
+            url.searchParams.append('limit', '5000'); // Get all films
 
             const options = {
                 hostname: url.hostname,
@@ -42,9 +47,12 @@ export default async function handler(req, res) {
             };
 
             const httpsReq = https.request(options, (httpsRes) => {
+                console.log("HTTPS response status:", httpsRes.statusCode);
+
                 let responseData = '';
 
                 const bodyTimeout = setTimeout(() => {
+                    console.error("Response body read timeout");
                     httpsRes.destroy();
                     return resolve(res.status(504).json({
                         error: "Response timeout"
@@ -59,6 +67,7 @@ export default async function handler(req, res) {
                     clearTimeout(bodyTimeout);
 
                     if (httpsRes.statusCode !== 200) {
+                        console.error("Supabase Error Response:", responseData);
                         return resolve(res.status(httpsRes.statusCode || 500).json({
                             error: "Database query failed"
                         }));
@@ -66,6 +75,7 @@ export default async function handler(req, res) {
 
                     try {
                         const data = JSON.parse(responseData);
+                        // Filter films by matching titles (case-insensitive, partial match)
                         const movieIds = data
                             .filter(film => {
                                 const filmTitle = film.metadata?.title?.toLowerCase() || '';
@@ -75,8 +85,10 @@ export default async function handler(req, res) {
                                 );
                             })
                             .map(film => film.id);
+                        console.log("Found movie IDs:", movieIds);
                         return resolve(res.status(200).json({ movieIds }));
                     } catch (parseError) {
+                        console.error("JSON parse error:", parseError);
                         return resolve(res.status(500).json({
                             error: "Failed to parse response",
                             message: parseError.message
@@ -86,6 +98,7 @@ export default async function handler(req, res) {
 
                 httpsRes.on('error', (error) => {
                     clearTimeout(bodyTimeout);
+                    console.error("Response stream error:", error);
                     return resolve(res.status(500).json({
                         error: "Response stream error",
                         message: error.message
@@ -94,6 +107,7 @@ export default async function handler(req, res) {
             });
 
             httpsReq.on('timeout', () => {
+                console.error("Request timeout");
                 httpsReq.destroy();
                 return resolve(res.status(504).json({
                     error: "Request timeout"
@@ -101,6 +115,7 @@ export default async function handler(req, res) {
             });
 
             httpsReq.on('error', (error) => {
+                console.error("Request error:", error);
                 return resolve(res.status(500).json({
                     error: "Request error",
                     message: error.message
@@ -110,6 +125,7 @@ export default async function handler(req, res) {
             httpsReq.end();
 
         } catch (error) {
+            console.error("Error in find-movies-by-title:", error);
             return resolve(res.status(500).json({
                 error: "Server Error",
                 message: error.message
