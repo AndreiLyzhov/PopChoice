@@ -103,19 +103,24 @@ export async function getExplanation(context, input) {
 
 export async function getPoster(title, year) {
     try {
+        console.log("api.getPoster: calling /api/get-poster for", title, year);
         const response = await fetch('/api/get-poster', {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title, year })
         })
 
+        console.log("api.getPoster: response status", response.status);
         if (!response.ok) {
+            console.error("api.getPoster: response not ok", response.status);
             return null;
         }
 
         const data = await response.json()
+        console.log("api.getPoster: response data", data);
         return data.posterUrl || null
     } catch (error) {
+        console.error("api.getPoster: error", error.message);
         return null;
     }
 }

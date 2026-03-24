@@ -63,7 +63,10 @@ export async function processRecommendations(formData) {
 
     const posterUrls = await Promise.all(
         match.map(async (item) => {
-            return await getPoster(item.metadata.title, item.metadata.year);
+            console.log("Fetching poster for:", item.metadata.title, item.metadata.year);
+            const url = await getPoster(item.metadata.title, item.metadata.year);
+            console.log("Poster result for", item.metadata.title, ":", url);
+            return url;
         })
     );
 
