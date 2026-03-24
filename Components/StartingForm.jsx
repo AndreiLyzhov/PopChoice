@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { setStartData } from '../utils/sessionStorage.js';
+import { setStartData, clearAll } from '../utils/sessionStorage.js';
 
 export default function StartingForm() {
     const navigate = useNavigate();
@@ -23,6 +23,7 @@ export default function StartingForm() {
             timeAmount: timeAmount,
         };
 
+        clearAll();
         setStartData(startData);
         navigate(`/form/1`);
     }

@@ -42,21 +42,20 @@ export function inputFormat(formData, movieDescriptions = {}) {
 
             // Create natural preference statements based on question type
             if (cleanQuestion.includes('favourite movie')) {
-                // Check if we have a description for this movie
-                const movieTitle = answer.trim();
-                const description = movieDescriptions[movieTitle] || movieDescriptions[movieTitle.toLowerCase()];
+                // Answer may contain multiple users' movies joined by ". "
+                // Match each known movie title against the answer
+                const matchedDescriptions = Object.entries(movieDescriptions)
+                    .filter(([title]) => answer.toLowerCase().includes(title.toLowerCase()))
+                    .map(([_, desc]) => {
+                        const stripped = desc.replace(/^[^:]+:\s*/, '');
+                        return `User loves films like: ${stripped}`;
+                    });
 
-                if (description) {
-                    // Strip out the title and year from the beginning of the description
-                    // Format is: "Movie Title (YEAR): description..."
-                    const strippedDescription = description.replace(/^[^:]+:\s*/, '');
-
-                    // Use only the description for semantic matching (no title)
-                    return `User loves films like: ${strippedDescription}`;
+                if (matchedDescriptions.length > 0) {
+                    return matchedDescriptions.join('. ');
                 } else {
-                    // If no description available, we can't do semantic matching
-                    // Return empty to exclude this from embedding
-                    return null;
+                    // No descriptions found — fall back to using the raw answer
+                    return `User's favourite movie is ${answer}`;
                 }
             } else if (cleanQuestion.includes('famous film person')) {
                 return `User likes movies with ${answer}`;

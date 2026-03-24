@@ -8,8 +8,8 @@ export default async function handler(req, res) {
     const { input } = req.body;
     console.log("Embedding creation input: ", input)
 
-    if (!input || typeof input !== 'string' || input.trim().length === 0) {
-        return res.status(400).json({ error: "Input is required and must be a non-empty string" });
+    if (!input) {
+        return res.status(400).json({ error: "Input is required" });
     }
 
     try {
